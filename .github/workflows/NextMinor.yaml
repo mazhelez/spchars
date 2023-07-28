@@ -35,27 +35,26 @@ jobs:
 
       - name: Initialize the workflow
         id: init
-        uses: freddydk/AL-Go/Actions/WorkflowInitialize@SettingsEnv
+        uses: mazhelez/AL-Go/Actions/WorkflowInitialize@output-encoding
         with:
           shell: powershell
           eventId: "DO0100"
 
       - name: Read settings
-        uses: freddydk/AL-Go/Actions/ReadSettings@SettingsEnv
         id: ReadSettings
+        uses: mazhelez/AL-Go/Actions/ReadSettings@output-encoding
         with:
           shell: powershell
           parentTelemetryScopeJson: ${{ steps.init.outputs.telemetryScopeJson }}
-          useBase64: 'Y'
 
       - name: Determine Workflow Depth
         id: DetermineWorkflowDepth
         run: |
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "WorkflowDepth=$($env:workflowDepth)"
+          Add-Content -Encoding UTF8 -Path $env:GITHUB_OUTPUT -Value "WorkflowDepth=$($env:workflowDepth)"
           
       - name: Determine Projects To Build
         id: determineProjectsToBuild
-        uses: freddydk/AL-Go/Actions/DetermineProjectsToBuild@SettingsEnv
+        uses: mazhelez/AL-Go/Actions/DetermineProjectsToBuild@output-encoding
         with:
           shell: powershell
           maxBuildDepth: ${{ env.workflowDepth }}
@@ -91,7 +90,7 @@ jobs:
 
       - name: Finalize the workflow
         id: PostProcess
-        uses: freddydk/AL-Go/Actions/WorkflowPostProcess@SettingsEnv
+        uses: mazhelez/AL-Go/Actions/WorkflowPostProcess@output-encoding
         with:
           shell: powershell
           eventId: "DO0100"

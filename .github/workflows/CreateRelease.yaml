@@ -69,28 +69,27 @@ jobs:
 
       - name: Initialize the workflow
         id: init
-        uses: freddydk/AL-Go/Actions/WorkflowInitialize@SettingsEnv
+        uses: mazhelez/AL-Go/Actions/WorkflowInitialize@output-encoding
         with:
           shell: powershell
           eventId: "DO0094"
 
       - name: Read settings
-        uses: freddydk/AL-Go/Actions/ReadSettings@SettingsEnv
         id: ReadSettings
+        uses: mazhelez/AL-Go/Actions/ReadSettings@output-encoding
         with:
           shell: powershell
           parentTelemetryScopeJson: ${{ steps.init.outputs.telemetryScopeJson }}
           get: templateUrl,repoName
-          useBase64: 'Y'
 
       - name: Determine Projects
         id: determineProjects
-        uses: freddydk/AL-Go/Actions/DetermineProjectsToBuild@SettingsEnv
+        uses: mazhelez/AL-Go/Actions/DetermineProjectsToBuild@output-encoding
         with:
           shell: powershell
 
       - name: Check for updates to AL-Go system files
-        uses: freddydk/AL-Go/Actions/CheckForUpdates@SettingsEnv
+        uses: mazhelez/AL-Go/Actions/CheckForUpdates@output-encoding
         with:
           shell: powershell
           parentTelemetryScopeJson: ${{ steps.init.outputs.telemetryScopeJson }}
@@ -166,16 +165,15 @@ jobs:
             }
           }
           $artifacts = @{ "include" = $include }
-          Write-Host "OUTPUTS:"
           $artifactsJson = $artifacts | ConvertTo-Json -compress
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "artifacts=$artifactsJson"
-          Write-Host "- artifacts=$artifactsJson"
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "commitish=$sha"
-          Write-Host "- commitish=$sha"
+          Add-Content -Encoding UTF8 -Path $env:GITHUB_OUTPUT -Value "artifacts=$artifactsJson"
+          Write-Host "artifacts=$artifactsJson"
+          Add-Content -Encoding UTF8 -Path $env:GITHUB_OUTPUT -Value "commitish=$sha"
+          Write-Host "commitish=$sha"
 
       - name: Prepare release notes
         id: createreleasenotes
-        uses: freddydk/AL-Go/Actions/CreateReleaseNotes@SettingsEnv
+        uses: mazhelez/AL-Go/Actions/CreateReleaseNotes@output-encoding
         with:
           shell: powershell
           parentTelemetryScopeJson: ${{ steps.init.outputs.telemetryScopeJson }}
@@ -218,21 +216,19 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Read settings
-        uses: freddydk/AL-Go/Actions/ReadSettings@SettingsEnv
-        id: ReadSettings
+        uses: mazhelez/AL-Go/Actions/ReadSettings@output-encoding
         with:
           shell: powershell
           parentTelemetryScopeJson: ${{ needs.CreateRelease.outputs.telemetryScopeJson }}
-          useBase64: 'Y'
 
       - name: Read secrets
-        uses: freddydk/AL-Go/Actions/ReadSecrets@SettingsEnv
+        uses: mazhelez/AL-Go/Actions/ReadSecrets@output-encoding
         env:
           secrets: ${{ toJson(secrets) }}
         with:
           shell: powershell
           parentTelemetryScopeJson: ${{ needs.CreateRelease.outputs.telemetryScopeJson }}
-          settingsJson: ${{ steps.ReadSettings.outputs.SettingsJson }}
+          settingsJson: ${{ env.Settings }}
           secrets: 'nuGetContext,storageContext'
 
       - name: Download artifact
@@ -273,10 +269,10 @@ jobs:
           if ('${{ matrix.atype }}' -eq 'Apps') {
             $nuGetContext = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String([System.Environment]::GetEnvironmentVariable('nuGetContext')))
           }
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "nuGetContext=$nuGetContext"
+          Add-Content -Encoding UTF8 -Path $env:GITHUB_OUTPUT -Value "nuGetContext=$nuGetContext"
 
       - name: Deliver to NuGet
-        uses: freddydk/AL-Go/Actions/Deliver@SettingsEnv
+        uses: mazhelez/AL-Go/Actions/Deliver@output-encoding
         if: ${{ steps.nuGetContext.outputs.nuGetContext }}
         env:
           deliveryContext: ${{ steps.nuGetContext.outputs.nuGetContext }}
@@ -297,10 +293,10 @@ jobs:
           if ('${{ matrix.atype }}' -eq 'Apps') {
             $storageContext = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String([System.Environment]::GetEnvironmentVariable('storageContext')))
           }
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "storageContext=$storageContext"
+          Add-Content -Encoding UTF8 -Path $env:GITHUB_OUTPUT -Value "storageContext=$storageContext"
 
       - name: Deliver to Storage
-        uses: freddydk/AL-Go/Actions/Deliver@SettingsEnv
+        uses: mazhelez/AL-Go/Actions/Deliver@output-encoding
         if: ${{ steps.storageContext.outputs.storageContext }}
         env:
           deliveryContext: ${{ steps.storageContext.outputs.storageContext }}
@@ -337,24 +333,22 @@ jobs:
     needs: [ CreateRelease, UploadArtifacts ]
     steps:
       - name: Read settings
-        uses: freddydk/AL-Go/Actions/ReadSettings@SettingsEnv
-        id: ReadSettings
+        uses: mazhelez/AL-Go/Actions/ReadSettings@output-encoding
         if: github.event.inputs.useGhTokenWorkflow == 'true'
         with:
           shell: powershell
           parentTelemetryScopeJson: ${{ steps.init.outputs.telemetryScopeJson }}
           get: keyVaultName,ghTokenWorkflowSecretName
-          useBase64: 'Y'
 
       - name: Read secrets
-        uses: freddydk/AL-Go/Actions/ReadSecrets@SettingsEnv
+        uses: mazhelez/AL-Go/Actions/ReadSecrets@output-encoding
         if: github.event.inputs.useGhTokenWorkflow == 'true'
         env:
           secrets: ${{ toJson(secrets) }}
         with:
           shell: powershell
           parentTelemetryScopeJson: ${{ steps.init.outputs.telemetryScopeJson }}
-          settingsJson: ${{ steps.ReadSettings.outputs.SettingsJson }}
+          settingsJson: ${{ env.Settings }}
           secrets: 'ghTokenWorkflow=${{ env.GHTOKENWORKFLOWSECRETNAME }}'
 
       - name: CalculateToken
@@ -367,10 +361,10 @@ jobs:
           } else {
             $ghToken = '${{ secrets.GITHUB_TOKEN }}'
           }
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "ghToken=$ghToken"
+          Add-Content -Encoding UTF8 -Path $env:GITHUB_OUTPUT -Value "ghToken=$ghToken"
 
       - name: Update Version Number
-        uses: freddydk/AL-Go/Actions/IncrementVersionNumber@SettingsEnv
+        uses: mazhelez/AL-Go/Actions/IncrementVersionNumber@output-encoding
         with:
           shell: powershell
           token: ${{ steps.CalculateToken.outputs.ghToken }}
@@ -388,7 +382,7 @@ jobs:
 
       - name: Finalize the workflow
         id: PostProcess
-        uses: freddydk/AL-Go/Actions/WorkflowPostProcess@SettingsEnv
+        uses: mazhelez/AL-Go/Actions/WorkflowPostProcess@output-encoding
         with:
           shell: powershell
           eventId: "DO0094"
