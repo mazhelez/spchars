@@ -35,17 +35,18 @@ jobs:
 
       - name: Initialize the workflow
         id: init
-        uses: microsoft/AL-Go-Actions/WorkflowInitialize@preview
+        uses: freddydk/AL-Go/Actions/WorkflowInitialize@SettingsEnv
         with:
           shell: powershell
           eventId: "DO0099"
 
       - name: Read settings
+        uses: freddydk/AL-Go/Actions/ReadSettings@SettingsEnv
         id: ReadSettings
-        uses: microsoft/AL-Go-Actions/ReadSettings@preview
         with:
           shell: powershell
           parentTelemetryScopeJson: ${{ steps.init.outputs.telemetryScopeJson }}
+          useBase64: 'Y'
       
       - name: Determine Workflow Depth
         id: DetermineWorkflowDepth
@@ -54,7 +55,7 @@ jobs:
           
       - name: Determine Projects To Build
         id: determineProjectsToBuild
-        uses: microsoft/AL-Go-Actions/DetermineProjectsToBuild@preview
+        uses: freddydk/AL-Go/Actions/DetermineProjectsToBuild@SettingsEnv
         with:
           shell: powershell
           maxBuildDepth: ${{ env.workflowDepth }}
@@ -90,7 +91,7 @@ jobs:
 
       - name: Finalize the workflow
         id: PostProcess
-        uses: microsoft/AL-Go-Actions/WorkflowPostProcess@preview
+        uses: freddydk/AL-Go/Actions/WorkflowPostProcess@SettingsEnv
         with:
           shell: powershell
           eventId: "DO0099"
